@@ -287,7 +287,7 @@ print('Training data - RMSE without intercept '+ str(mle_train_i))
 
 # Problem 3
 k = 101
-lambdas = np.linspace(0,1, num=k)
+lambdas = np.linspace(0,.004, num=k)
 i = 0
 rmses3 = np.zeros((k, 1))
 rmses3_train = np.zeros((k, 1))
@@ -303,7 +303,7 @@ plt.show()
 
 # Problem 4
 k = 101
-lambdas = np.linspace(0, 1, num=k)
+lambdas = np.linspace(0, .004, num=k)
 i = 0
 rmses4 = np.zeros((k, 1))
 opts = {'maxiter': 100}  # Preferred value.
