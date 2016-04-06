@@ -29,11 +29,8 @@ def ldaLearn(X, y):
     # Initialize Means
     means = np.empty((d, k))
 
-    covmat = np.zeros(d)
-
     # Iterating through the classes
     for i in range(1, k + 1):
-
         # Get indices where current class is found
         indices = np.where(y == i)[0]
 
@@ -43,12 +40,7 @@ def ldaLearn(X, y):
         # Find mean and transpose to fit our means dimensions
         means[:, i - 1] = np.mean(tempArr, axis=0).transpose()
 
-        # Get covmat
-        covmat += (np.shape(tempArr)[0] - 1) * np.cov(np.transpose(tempArr))
-
-    covmat *= (1.0 / (np.shape(X)[0] - k))
-
-    print(means)
+    covmat = np.cov(X, rowvar=0)
 
     return means, covmat
 
@@ -71,7 +63,6 @@ def qdaLearn(X, y):
 
     covmats = []
     for i in range(1, numClass + 1):
-
         # Indices for current class in y
         indices = np.where(y == i)[0]
 
@@ -95,6 +86,21 @@ def ldaTest(means, covmat, Xtest, ytest):
     # ypred - N x 1 column vector indicating the predicted labels
 
     # IMPLEMENT THIS METHOD
+    covmat_inverse = np.linalg.inv(covmat)
+
+    covmat_det = np.linalg.det(covmat)
+
+    ypred = np.zeros((Xtest.shape[0], means.shape[1]))
+
+    for i in range(means.shape[1]):
+        ypred[:, i] = np.exp(
+            -0.5 * np.sum((Xtest - means[:, i]) * np.dot(covmat_inverse, (Xtest - means[:, i]).T).T, 1)) / (
+            np.sqrt(np.pi * 2) * (np.power(covmat_det, 2)))
+
+    ypred = np.argmax(ypred, 1) + 1
+
+    acc = np.mean(ypred == ytest.reshape(ytest.size))
+
     return acc, ypred
 
 
@@ -108,6 +114,20 @@ def qdaTest(means, covmats, Xtest, ytest):
     # ypred - N x 1 column vector indicating the predicted labels
 
     # IMPLEMENT THIS METHOD
+    ypred = np.zeros((Xtest.shape[0], means.shape[1]))
+
+    for i in range(means.shape[1]):
+        covmat_inverse = np.linalg.inv(covmats[i])
+        covmat_det = np.linalg.det(covmats[i])
+        ypred[:, i] = np.exp(
+            -0.5 * np.sum((Xtest - means[:, i]) * np.dot(covmat_inverse, (Xtest - means[:, i]).T).T,
+                          1)) / (
+            np.sqrt(np.pi * 2) * (np.power(covmat_det, 2)))
+
+    ypred = np.argmax(ypred, 1) + 1
+
+    acc = np.mean(ypred == ytest.reshape(ytest.size))
+
     return acc, ypred
 
 
@@ -131,7 +151,8 @@ def learnRidgeRegression(X, y, lambd):
 
     # IMPLEMENT THIS METHOD
 
-    w = np.dot(np.linalg.inv(lambd*X.shape[0]*np.identity(X.shape[1]) + np.dot(X.T,X)), np.dot(X.T,y))
+    w = np.dot(np.linalg.inv(
+        lambd * X.shape[0] * np.identity(X.shape[1]) + np.dot(X.T, X)), np.dot(X.T, y))
 
     return w
 
@@ -149,7 +170,6 @@ def testOLERegression(w, Xtest, ytest):
 
 
 def regressionObjVal(w, X, y, lambd):
-
     # compute squared error (scalar) and gradient of squared error with respect
     # to w (vector) for the given data X and y and the regularization parameter
     # lambda
@@ -167,6 +187,7 @@ def mapNonLinear(x, p):
     # IMPLEMENT THIS METHOD
     return Xd
 
+
 # Main script
 
 # Problem 1
@@ -179,11 +200,11 @@ else:
 
 # LDA
 means, covmat = ldaLearn(X, y)
-ldaacc = ldaTest(means, covmat, Xtest, ytest)
+ldaacc, ldares = ldaTest(means, covmat, Xtest, ytest)
 print('LDA Accuracy = ' + str(ldaacc))
 # QDA
 means, covmats = qdaLearn(X, y)
-qdaacc = qdaTest(means, covmats, Xtest, ytest)
+qdaacc, qdares = qdaTest(means, covmats, Xtest, ytest)
 print('QDA Accuracy = ' + str(qdaacc))
 
 # plotting boundaries
@@ -203,6 +224,8 @@ plt.show()
 zacc, zqdares = qdaTest(means, covmats, xx, np.zeros((xx.shape[0], 1)))
 plt.contourf(x1, x2, zqdares.reshape((x1.shape[0], x2.shape[0])))
 plt.scatter(Xtest[:, 0], Xtest[:, 1], c=ytest)
+
+plt.show()
 
 # Problem 2
 
@@ -241,7 +264,7 @@ k = 101
 lambdas = np.linspace(0, 1, num=k)
 i = 0
 rmses4 = np.zeros((k, 1))
-opts = {'maxiter': 100}    # Preferred value.
+opts = {'maxiter': 100}  # Preferred value.
 w_init = np.ones((X_i.shape[1], 1))
 for lambd in lambdas:
     args = (X_i, y, lambd)
@@ -252,7 +275,6 @@ for lambd in lambdas:
     rmses4[i] = testOLERegression(w_l, Xtest_i, ytest)
     i = i + 1
 plt.plot(lambdas, rmses4)
-
 
 # Problem 5
 pmax = 7
